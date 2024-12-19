@@ -9,7 +9,7 @@ import os
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
 from tensorflow import keras
-from tensorflow.keras.layers import Dense, Flatten, Dropout, concatenate, Input, Reshape, Conv2D, MaxPool2D, UpSampling2D
+from tensorflow.keras.layers import Dense, Flatten, Dropout, concatenate, Input, Reshape, Conv2D, MaxPool2D, UpSampling2D, BatchNormalization
 
 from keras.models import Sequential
 from keras.utils import plot_model
@@ -21,22 +21,22 @@ from PIL import Image
 class DataSet(object):
     def __init__ (self, filename, visibleExamples=0):
         self.filename = filename
-        self.dataset = []
+        self.data = []
         with open(self.filename, "r") as read_file:
-            self.dataset = np.asarray(json.load(read_file)) # 2270
+            self.data = np.asarray(json.load(read_file)) # 2270
         ''' Выводим 3 строки датасета, для наглядности '''
         if (visibleExamples>0):
             print("Examples from dataset" + filename)
         for i in range(visibleExamples):
-            print(str(i) + ": " + str(self.dataset[i]))
+            print(str(i) + ": " + str(self.data[i]))
 
         ''' Определяем количество данных '''
-        self.packetCount = len(self.dataset)
+        self.packetCount = len(self.data)
         print("All count: " + str(self.packetCount))
 
 
 # Функция генерации тренировочного набора данных
-def getTrainDataSet(count = 1000, RxTxLabel='ff'):
+def getTrainDataSet(count = 500, RxTxLabel='ff'):
   XMass=[]
   YMass=[]
   AMass=[]
@@ -418,15 +418,20 @@ def getTrainDataSet(count = 1000, RxTxLabel='ff'):
           YMass.append(image2arr9)
           YMass.append(image2arr10)
       # Преобразуем в массив numPy
-  trainDataSet_X = np.array([xi+[None]*(56-len(xi)) for xi in XMass])
-  trainDataSet_A = np.array([xi+[None]*(56-len(xi)) for xi in AMass])
-  trainDataSet_Y = np.array([yi for yi in YMass])
+
+  print(np.asarray(XMass).shape)
+  print(np.asarray(AMass).shape)
+  print(np.asarray(YMass).shape)
+  #trainDataSet_X = np.array([xi+[None]*(56-len(xi)) for xi in XMass])
+  #trainDataSet_A = np.array([xi+[None]*(56-len(xi)) for xi in AMass])
+  #trainDataSet_Y = np.array([yi for yi in YMass])
   # Перемешаем для верности
   # trainDataSet = utils.shuffle(trainDataSet)
-  return(trainDataSet_X, trainDataSet_Y, trainDataSet_A)
+  return(np.asarray(XMass).T, np.asarray(YMass), np.asarray(AMass).T)
+  #return(trainDataSet_X, trainDataSet_Y, trainDataSet_A)
 
 # Функция генерации тестового набора данных
-def getTestDataSet(frm = 1000, count = 250, RxTxLabel='ff'):
+def getTestDataSet(frm = 500, count = 100, RxTxLabel='ff'):
   XMass=[]
   YMass=[]
   AMass=[]
@@ -808,12 +813,17 @@ def getTestDataSet(frm = 1000, count = 250, RxTxLabel='ff'):
           YMass.append(image2arr9)
           YMass.append(image2arr10)
       # Преобразуем в массив numPy
-  testDataSet_X = np.array([xi+[None]*(56-len(xi)) for xi in XMass])
-  testDataSet_A = np.array([xi+[None]*(56-len(xi)) for xi in AMass])
-  testDataSet_Y = np.array([yi for yi in YMass])
+  print(np.asarray(XMass).shape)
+  print(np.asarray(AMass).shape)
+  print(np.asarray(YMass).shape)
+
+  #testDataSet_X = np.array([xi+[None]*(56-len(xi)) for xi in XMass])
+  #testDataSet_A = np.array([xi+[None]*(56-len(xi)) for xi in AMass])
+  #testDataSet_Y = np.array([yi for yi in YMass])
   # Перемешаем для верности
   # trainDataSet = utils.shuffle(trainDataSet)
-  return(testDataSet_X, testDataSet_Y, testDataSet_A)
+  #return(testDataSet_X, testDataSet_Y, testDataSet_A)
+  return(np.asarray(XMass).T, np.asarray(YMass), np.asarray(AMass).T)
 
 
 
@@ -1078,6 +1088,108 @@ if __name__ == '__main__':
     image2arr10 = np.array(image2arr10) / 255
 
     pyplot.imshow(image)
+    # Генерация обучающей выборки
+    (xff, yff, aff) = getTrainDataSet(RxTxLabel='ff')
+    (xfs, yfs, afs) = getTrainDataSet(RxTxLabel='fs')
+    (xft, yft, aft) = getTrainDataSet(RxTxLabel='ft')
+    (xsf, ysf, asf) = getTrainDataSet(RxTxLabel='sf')
+    (xss, yss, ass) = getTrainDataSet(RxTxLabel='ss')
+    (xst, yst, ast) = getTrainDataSet(RxTxLabel='st')
+    (xtf, ytf, atf) = getTrainDataSet(RxTxLabel='tf')
+    (xts, yts, ats) = getTrainDataSet(RxTxLabel='ts')
+    (xtt, ytt, att) = getTrainDataSet(RxTxLabel='tt')
 
+    # Генерация тестовой выборки
+    (txff, tyff, taff) = getTestDataSet(RxTxLabel='ff')
+    (txfs, tyfs, tafs) = getTestDataSet(RxTxLabel='fs')
+    (txft, tyft, taft) = getTestDataSet(RxTxLabel='ft')
+    (txsf, tysf, tasf) = getTestDataSet(RxTxLabel='sf')
+    (txss, tyss, tass) = getTestDataSet(RxTxLabel='ss')
+    (txst, tyst, tast) = getTestDataSet(RxTxLabel='st')
+    (txtf, tytf, tatf) = getTestDataSet(RxTxLabel='tf')
+    (txts, tyts, tats) = getTestDataSet(RxTxLabel='ts')
+    (txtt, tytt, tatt) = getTestDataSet(RxTxLabel='tt')
+
+    # Собираем фазы в 1 массив
+    fullPhaseTrainMass = np.concatenate([aff, afs, aft, asf, ass, ast, atf, ats, att]).T
+    print("Size: " + str(fullPhaseTrainMass.shape))
+    # Собираем амплитуды в 1 массив
+    fullAmplTrainMass = np.concatenate([xff, xfs, xft, xsf, xss, xst, xtf, xts, xtt]).T
+
+    # Собираем амплитуды в 1 массив для теста
+    fullAmplTestMass = np.concatenate([txff, txfs, txft, txsf, txss, txst, txtf, txts, txtt]).T
+
+    # Собираем амплитуды в 1 массив для теста
+    fullPhaseTestMass = np.concatenate([taff, tafs, taft, tasf, tass, tast, tatf, tats, tatt]).T
+
+    # Собираем саммв и фаз и амплитуд
+    #fullPhaseAndAmplTrainMass = np.concatenate([fullPhaseTrainMass, fullAmplTrainMass])
+    #fullPhaseAndAmplTestMass = np.concatenate([fullPhaseTestMass, fullAmplTestMass])
+
+    print(fullAmplTrainMass.shape)
+    print(fullPhaseTrainMass.shape)
+
+    ''' Модель автоэнкодера '''
+    # Слой входных данных по амплитуде
+    input_ampl = Input(shape=(504,))
+
+    a = Dense(512, activation='relu', input_shape=(504))
+
+    # Слой водных данных по фазе
+    input_phase = Input(shape=(504,))
+
+    p = Dense(512, activation='relu', input_shape=(504))
+
+    # Соединение слоёв
+    x = concatenate([input_ampl, input_phase])
+
+    # Полносвязный слой
+    xx = Dense(4096, activation='relu')(x)
+    #xx = Dense(65536, activation='relu')(x)
+
+    # Скрытый слой с hidden_dim нейронами
+    encoded_start = Dense(4096, activation='tanh')(xx)
+
+    reshape_layer = Reshape((8, 8, 64), input_shape=(4096,))(encoded_start)
+
+    upsampl_layer1 = UpSampling2D(size=(2, 2))(reshape_layer)
+
+    encoded_layer1 = Conv2D(512, (3, 3), activation='tanh', padding='same')(upsampl_layer1)
+
+    batchnormal_layer1 = BatchNormalization(momentum=0.5)(encoded_layer1)
+
+    upsampl_layer2 = UpSampling2D(size=(2, 2))(batchnormal_layer1)
+
+    encoded_layer2 = Conv2D(256, (3, 3), activation='tanh', padding='same')(upsampl_layer2)
+
+    batchnormal_layer2 = BatchNormalization(momentum=0.5)(encoded_layer2)
+
+    upsampl_layer3 = UpSampling2D(size=(2, 2))(batchnormal_layer2)
+
+    encoded_layer3 = Conv2D(128, (3, 3), activation='tanh', padding='same')(upsampl_layer3)
+
+    batchnormal_layer3 = BatchNormalization(momentum=0.5)(encoded_layer3)
+
+    encoded_layer4 = Conv2D(1, (3, 3), activation='tanh', padding='same')(batchnormal_layer3)
+
+    # Собираем модель из слоёв
+    encoder = keras.Model([input_ampl, input_phase], encoded_layer4, name="encoder")
+    encoder.compile(optimizer='adam', loss='mean_squared_error')
+
+    encoder.summary()
+
+    history = encoder.fit([fullAmplTrainMass, fullPhaseTrainMass], yff, epochs=5,
+                          validation_data=([fullAmplTestMass, fullPhaseTestMass], tyff))
+    pyplot.plot(history.history['loss'])
+    pyplot.plot(history.history['val_loss'])
+    pyplot.title('Потери на этапах проверки и обучения')
+    pyplot.ylabel('Потери')
+    pyplot.xlabel('Эпохи')
+    pyplot.legend(['Потери на этапе обучения', 'Потери на этапе проверки'], loc='upper left')
+    pyplot.show()
+
+
+
+    input()
     print('PyCharm')
 
