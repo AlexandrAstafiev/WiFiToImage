@@ -1178,7 +1178,7 @@ if __name__ == '__main__':
 
     encoder.summary()
 
-    history = encoder.fit([fullAmplTrainMass, fullPhaseTrainMass], yff, epochs=5,
+    history = encoder.fit([fullAmplTrainMass, fullPhaseTrainMass], yff, epochs=1,
                           validation_data=([fullAmplTestMass, fullPhaseTestMass], tyff))
     pyplot.plot(history.history['loss'])
     pyplot.plot(history.history['val_loss'])
@@ -1187,7 +1187,46 @@ if __name__ == '__main__':
     pyplot.xlabel('Эпохи')
     pyplot.legend(['Потери на этапе обучения', 'Потери на этапе проверки'], loc='upper left')
     pyplot.show()
+    encoder.save_weights('model.weights.h5')
+    model_json = encoder.to_json()
+    # Записываем модель в файл
+    json_file = open("mnist_model.json", "w")
+    json_file.write(model_json)
+    json_file.close()
+    decodedImg = encoder.predict([fullAmplTestMass, fullPhaseTestMass])
+    print(decodedImg[0])
+    n = 10
+    pyplot.figure(figsize=(20, 20))
+    res = 1
+    resdel = 0
+    respr = 0
+    sum = 4096
 
+    for i in range(n):
+        resdel = 0
+        # оригинальные изображения
+        ax = pyplot.subplot(10, n, i + 1)
+        pyplot.imshow((tyff[i]))
+        pyplot.gray()
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+
+        # восстановленные изображения автоэнкодером
+        ax = pyplot.subplot(10, n, i + 1 + n)
+        pyplot.imshow(np.array(decodedImg[i]))
+        pyplot.gray()
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+        for j in range(64):
+            for k in range(64):
+                if ((tyff[i][j][k] > 0.8) == (decodedImg[i][j][k] > 0.8)):
+                    respr = respr + 1
+        resdel = respr / sum
+        res = res * resdel
+        respr = 0
+
+    pyplot.show()
+    print(res)
 
 
     input()
